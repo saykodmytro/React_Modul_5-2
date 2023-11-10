@@ -1,7 +1,14 @@
 import axios from 'axios';
 import Loader from 'components/Loader/Loader';
-import React, { useEffect, useState } from 'react';
-import { NavLink, Route, Routes, useParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Link,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+  useParams,
+} from 'react-router-dom';
 import PostsComments from './PostsComments';
 
 // /posts/0deqwe
@@ -10,6 +17,9 @@ const PostDetails = () => {
   const { postId } = useParams();
   // postId -> '0deqwe';
   // postId -> 'dwa2123dwa241';
+  // Робимо кнопку Back
+  const location = useLocation();
+  const backLinkRef = useRef(location.state?.from ?? '/');
   const [postDetails, setPostDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -35,6 +45,7 @@ const PostDetails = () => {
   return (
     <div>
       <h1>Post Details</h1>
+      <Link to={backLinkRef.current}>Go back</Link>
       {error !== null && <p className="error-bage">{error}</p>}
       {isLoading && <Loader />}
       {postDetails !== null && (
