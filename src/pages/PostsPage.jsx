@@ -1,133 +1,72 @@
 import axios from 'axios';
-import React, { Component } from 'react';
-
-import { StyledPosts } from './PostsPage.styled';
 import Loader from 'components/Loader/Loader';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
-// rcc - react class component
-// rafce - react arrow function expression component export default
+const PostsPage = () => {
+  const [searchedPosts, setSearchedPosts] = useState(null); // це буде стейт щоб ми зберігали отримані пости
 
-export default class PostsPage extends Component {
-  state = {
-    posts: null,
-    comments: null,
-    selectedPostId: null,
+  const [isLoading, setIsLoading] = useState(null); // стейт для індикатора завантаження
 
-    isLoading: false,
-    error: null,
+  const [error, setError] = useState(null); // стейт для індикатора помилки
+
+  const [searchParams, setSearchParams] = useSearchParams(); // цей хук повертає кортеж, де перше значення це наш обєкт з пошуковим параметрам. Друге значення - це ф-я яка змінює ці параметри
+  const queryValue = searchParams.get('query'); // таким чином ми отримуємо значення нашого пошукового параметра і записуємо його в queryValue
+  console.log('queryValue: ', queryValue);
+
+  const onFormSubmit = e => {
+    e.preventDefault();
+    const value = e.currentTarget.elements.searchKey.value; // отримуємо значення із інпута по сабміту, яке користувач ввів
+    console.log('value: ', value);
+
+    setSearchParams({ query: value }); // записуємо нове значення  в адресн рядок
   };
 
-  fetchPosts = async () => {
-    try {
-      this.setState({
-        isLoading: true,
-      });
-      const { data } = await axios.get(
-        'https://jsonplaceholder.typicode.com/posts'
-      );
+  useEffect(() => {
+    if (!queryValue) return;
 
-      this.setState({
-        posts: data,
-      });
-    } catch (error) {
-      this.setState({ error: error.message });
-    } finally {
-      this.setState({
-        isLoading: false,
-      });
-    }
-  };
+    const fetchSearchedPosts = async () => {
+      try {
+        setIsLoading(true);
+        const { data } = await axios.get(
+          `https://jsonplaceholder.typicode.com/posts?_limit=10&_page=1&title=${queryValue}`
+        );
+        // ВАМ ПОТРІБНО БУДЕ ПРОСТО ЗРОБИТИ setSearchedPosts(data)
+        setSearchedPosts([data]);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSearchedPosts();
+  }, [queryValue]);
 
-  fetchPostComments = async () => {
-    try {
-      this.setState({
-        isLoading: true,
-      });
-      const { data } = await axios.get(
-        `https://jsonplaceholder.typicode.com/comments?postId=${this.state.selectedPostId}`
-      );
+  return (
+    <div>
+      <form onSubmit={onFormSubmit}>
+        <label htmlFor="">
+          <span>Search post by id: </span>
+          <input type="text" name="searchKey" required placeholder="12" />{' '}
+          {/* щоб наша форма розрізняла інпути , треба кожному інпуту додати
+          унікальний ідентифікатор пропс name */}
+        </label>
+        <button type="submit">Search post</button>
+      </form>
+      {error !== null && <p className="error-bage">{error}</p>}
+      {isLoading && <Loader />}
+      {searchedPosts !== null &&
+        searchedPosts.map(post => {
+          return (
+            <div key={post.id}>
+              <h2>{post.title}</h2>
+              <h3>PostId: {post.id}</h3>
+              <code>{post.body}</code>
+            </div>
+          );
+        })}
+    </div>
+  );
+};
 
-      this.setState({
-        comments: data,
-      });
-    } catch (error) {
-      this.setState({ error: error.message });
-    } finally {
-      this.setState({
-        isLoading: false,
-      });
-    }
-  };
-
-  onSelecPostId = postId => {
-    this.setState({
-      selectedPostId: postId,
-    });
-  };
-
-  componentDidMount() {
-    this.fetchPosts();
-  }
-
-  componentDidUpdate(_, prevState) {
-    if (prevState.selectedPostId !== this.state.selectedPostId) {
-      this.fetchPostComments();
-    }
-  }
-
-  render() {
-    return (
-      <StyledPosts>
-        <h1>HTTP-requests</h1>
-
-        {this.state.error !== null && (
-          <p className="error-bage">
-            Oops, some error occured... Error message: {this.state.error}
-          </p>
-        )}
-        {this.state.isLoading && <Loader />}
-        <div className="listWrapper">
-          <ul className="postList">
-            {this.state.posts !== null &&
-              this.state.posts.map(post => {
-                return (
-                  <li
-                    key={post.id}
-                    // onClick={() => this.onSelecPostId(post.id)}
-                    className="postListItem"
-                  >
-                    <Link to={`/posts/${post.id}`}>
-                      <h2 className="itemTitle">{post.title}</h2>
-                      <p className="itemBody">
-                        <b>Body:</b> {post.body}
-                      </p>
-                    </Link>
-                  </li>
-                );
-              })}
-          </ul>
-          <ul className="commentsList">
-            {this.state.selectedPostId !== null && (
-              <li className="commentsListItem">
-                Selected post id: {this.state.selectedPostId}
-              </li>
-            )}
-            {this.state.comments !== null &&
-              this.state.comments.map(comment => {
-                return (
-                  <li key={comment.id} className="commentsListItem">
-                    <h2 className="commentTitle">Name: {comment.name}</h2>
-                    <h3 className="commentEmail">Email: {comment.email}</h3>
-                    <p className="commentBody">
-                      <b>Body:</b> {comment.body}
-                    </p>
-                  </li>
-                );
-              })}
-          </ul>
-        </div>
-      </StyledPosts>
-    );
-  }
-}
+export default PostsPage;
