@@ -43,7 +43,7 @@ const productsData = [
   },
 ];
 
-export const ProductsPage = () => {
+const ProductsPage = () => {
   const [products, setProducts] = useState(() => {
     const stringifiedProducts = localStorage.getItem('products');
     const parsedProducts = JSON.parse(stringifiedProducts) ?? productsData;
@@ -108,3 +108,5 @@ export const ProductsPage = () => {
     </div>
   );
 };
+
+export default ProductsPage;

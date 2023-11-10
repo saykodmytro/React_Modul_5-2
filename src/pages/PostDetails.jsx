@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Loader from 'components/Loader/Loader';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import {
   Link,
   NavLink,
@@ -9,7 +9,8 @@ import {
   useLocation,
   useParams,
 } from 'react-router-dom';
-import PostsComments from './PostsComments';
+
+const PostsComments = lazy(() => import('pages/PostsComments'));
 
 // /posts/0deqwe
 // /posts/dwa2123dwa241
@@ -60,9 +61,11 @@ const PostDetails = () => {
           Comments
         </NavLink>
       </div>
-      <Routes>
-        <Route path="comments" element={<PostsComments />} />
-      </Routes>
+      <Suspense fallback={<Loader />}>
+        <Routes>
+          <Route path="comments" element={<PostsComments />} />
+        </Routes>
+      </Suspense>
     </div>
   );
 };
